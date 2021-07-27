@@ -5,57 +5,82 @@ To change this template file, choose Tools | Templates
 and open the template in the editor.
 -->
 <html>
-    <head>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.js"></script>
-        <script src="../officeprops.js"></script>
-        
-        <script>
-        function showData(){
-            var file = document.getElementById("file").files[0];
-            OFFICEPROPS.getData(file).then(function(metadata){
+
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.js"></script>
+    <script src="../officeprops.js"></script>
+
+    <script>
+
+        var __metadataInputs = {};
+        function showData() {
+            // clear
+            __metadataInputs = {};
+            var file = document.getElementById("__file").files[0];
+            OFFICEPROPS.getData(file).then(function (metadata) {
                 console.log(metadata);
-                var createTableRow = (name,value) => {
+                var createTableRow = (name, value) => {
                     var row = document.createElement("TR");
                     var cellName = document.createElement("TD"), txtName = document.createTextNode(name);
                     cellName.appendChild(txtName);
                     row.appendChild(cellName);
-                    var cellValue = document.createElement("TD"), txtValue = document.createTextNode(value);
-                    cellValue.appendChild(txtValue);
+
+                    var cellValue = document.createElement("TD");
+
+                    // input box
+                    var inputnode = document.createElement("input");
+                    inputnode.setAttribute("value", value);
+                    inputnode.setAttribute("id", name)
+                    __metadataInputs[name] = inputnode;
+                    cellValue.appendChild(inputnode);
                     row.appendChild(cellValue);
                     return row;
                 }
                 var appendData = (metadata) => {
-                    for(key in metadata){
+                    for (key in metadata) {
                         var data = metadata[key];
-                        container.append(createTableRow(key,data.value))
+                        container.append(createTableRow(key, data.value))
                     }
                 }
-                var container = document.getElementById("container");
-                container.innerHTML='';
+                var container = document.getElementById("__container");
+                container.innerHTML = '';
                 appendData(metadata.editable);
                 appendData(metadata.readOnly);
             });
-        }    
-        
-        function removeData(){
-            var file = document.getElementById("file").files[0];
-            OFFICEPROPS.removeMetaData(file).then(function(zip){
-                downloadFile(zip,file.name);
+        }
+
+        function removeData() {
+            var file = document.getElementById("__file").files[0];
+            OFFICEPROPS.removeMetaData(file).then(function (zip) {
+                downloadFile(zip, file.name);
             });
         }
-        
-        function anonymousAuthor(){
-            var file = document.getElementById("file").files[0];
-            OFFICEPROPS.getData(file).then(function(metaData){
+
+        function anonymousAuthor() {
+            var file = document.getElementById("__file").files[0];
+            OFFICEPROPS.getData(file).then(function (metaData) {
+                debugger;
                 metaData.editable.creator.value = "anonymous";
-                OFFICEPROPS.editData(file,metaData).then(function(zip){
-                    downloadFile(zip,file.name)
+                OFFICEPROPS.editData(file, metaData).then(function (zip) {
+                    downloadFile(zip, file.name)
                 });
             });
         }
-        
-        
-        function downloadFile(blob,fileName){
+
+        function saveModified() {
+            var file = document.getElementById("__file").files[0];
+            OFFICEPROPS.getData(file).then(function (metaData) {
+                for (var key in __metadataInputs) {
+                    metaData.editable[key].value = __metadataInputs[key].value;
+                }
+                OFFICEPROPS.editData(file, metaData).then(function (zip) {
+                    downloadFile(zip, file.name)
+                });
+            });
+        }
+
+
+        function downloadFile(blob, fileName) {
             var a = document.createElement("a");
             document.body.appendChild(a);
             a.style = "display: none";
@@ -63,20 +88,21 @@ and open the template in the editor.
             a.href = url;
             a.download = fileName;
             a.click();
-            window.URL.revokeObjectURL(url);  
+            window.URL.revokeObjectURL(url);
         }
-        
-        
-        </script>
-        
-    </head>
-    <body>
-            <input type="file" id="file" onchange="showData()"/>
-            <div>
-                <button onclick="removeData()">Remove metadata</button>
-                <button onclick="anonymousAuthor()">Anonymous author</button>
-            </div>
-        <div id="container"></div>
-    </body>
-    
+
+
+    </script>
+
+</head>
+
+<body>
+    <input type="file" id="__file" onchange="showData()" />
+    <div>
+        <button onclick="removeData()">Remove Metadata</button>
+        <button onclick="saveModified()">Save Modified</button>
+    </div>
+    <div id="__container"></div>
+</body>
+
 </html>
