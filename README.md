@@ -1,3 +1,7 @@
+## About this fork
+
+Modify the sample program to a GUI for modifying metadata.
+
 # OfficeProps.js
 
 A JavaScript library used to extract, edit or remove metadata in Microsoft Office and Open Office files.
